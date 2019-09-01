@@ -17,7 +17,7 @@ var rootCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		client.Call("GET", url)
+		client.Call(client.HttpRequest{"GET", url})
 	},
 }
 
