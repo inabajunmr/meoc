@@ -17,7 +17,12 @@ var rootCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		client.Call(client.HttpRequest{"GET", url})
+		profile, err := cmd.Flags().GetString("profile")
+		if err != nil {
+			os.Exit(1)
+		}
+
+		client.Call(client.HttpRequest{Method: "GET", URI: url}, profile)
 	},
 }
 
@@ -31,4 +36,5 @@ func Execute() {
 
 func init() {
 	rootCmd.Flags().StringP("url", "u", "", "endpoint")
+	rootCmd.Flags().StringP("profile", "p", "", "authentication profile")
 }

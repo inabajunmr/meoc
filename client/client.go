@@ -9,14 +9,12 @@ type HttpRequest struct {
 	URI    string
 }
 
-func Call(httpRequest HttpRequest) {
+func Call(httpRequest HttpRequest, oauth2Profile string) {
 
 	// Get Access Token
 	// TODO authentication info from file
-	config := oauth2.OAuth2Config{"xx",
-		"xx",
-		"https://meoc.auth0.com/oauth/token", "client_credentials", ""}
-	oauth2.GetAccessToken(config)
+
+	oauth2.GetAccessToken(oauth2Profile)
 	// Set TODO Access Token for request
 
 	// req, _ := http.NewRequest(httpRequest.Method, httpRequest.URI, nil)

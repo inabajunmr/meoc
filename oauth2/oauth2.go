@@ -6,7 +6,10 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os/user"
 	"strings"
+
+	"gopkg.in/ini.v1"
 )
 
 type OAuth2Config struct {
@@ -17,7 +20,17 @@ type OAuth2Config struct {
 	Scope         string
 }
 
-func GetAccessToken(config OAuth2Config) string {
+func GetAccessToken(profile string) string {
+	usr, _ := user.Current()
+	ini, _ := ini.Load(usr.HomeDir + "/.meoc/config")
+
+	config := OAuth2Config{
+		ClientId:      ini.Section(profile).Key("client_id").String(),
+		ClientSecret:  ini.Section(profile).Key("client_secret").String(),
+		TokenEndpoint: ini.Section(profile).Key("token_endpoint").String(),
+		GrantType:     ini.Section(profile).Key("grant_type").String(),
+		Scope:         ini.Section(profile).Key("scope").String()}
+
 	form := url.Values{}
 	form.Add("client_id", config.ClientId)
 	form.Add("client_secret", config.ClientSecret)
