@@ -1,11 +1,13 @@
 package oauth2
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"os/user"
 	"strings"
 
@@ -19,6 +21,7 @@ type OAuth2Config struct {
 	AuthorizationEndpoint string
 	GrantType             string
 	Scope                 string
+	RedirectUri           string
 }
 
 func GetAccessToken(profile string) string {
@@ -33,6 +36,7 @@ func GetAccessToken(profile string) string {
 		AuthorizationEndpoint: ini.Section(profile).Key("authorization_endpoint").String(),
 		TokenEndpoint:         ini.Section(profile).Key("token_endpoint").String(),
 		GrantType:             ini.Section(profile).Key("grant_type").String(),
+		RedirectUri:           ini.Section(profile).Key("redirect_uri").String(),
 		Scope:                 ini.Section(profile).Key("scope").String()}
 
 	switch config.GrantType {
@@ -68,17 +72,44 @@ func getTokenByClientCredentials(config OAuth2Config) string {
 }
 
 func getTokenByAuthorizationCode(config OAuth2Config) string {
-	req, _ := http.NewRequest("GET", config.AuthorizationEndpoint, nil)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	query := req.URL.Query()
+	// compile authorization request uri
+	authReq, _ := http.NewRequest("GET", config.AuthorizationEndpoint, nil)
+	authReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	query := authReq.URL.Query()
 	query.Add("client_id", config.ClientId)
 	query.Add("client_secret", config.ClientSecret)
 	query.Add("response_type", "code")
 	query.Add("scope", config.Scope)
-	req.URL.RawQuery = query.Encode()
-	fmt.Println(req.URL.String)
+	authReq.URL.RawQuery = query.Encode()
 
-	// get auth code
-	// get token
+	// user access uri by browser
+	fmt.Println("Access to ", authReq.URL.String())
+	// user input auth code by terminal
+	fmt.Println("Authentication code:")
+	stdin := bufio.NewScanner(os.Stdin)
+	stdin.Scan()
+	code := stdin.Text()
+
+	// token request
+	form := url.Values{}
+	form.Add("client_id", config.ClientId)
+	form.Add("client_secret", config.ClientSecret)
+	form.Add("grant_type", config.GrantType)
+	form.Add("redirect_uri", config.RedirectUri)
+	form.Add("code", code)
+
+	body := strings.NewReader(form.Encode())
+	client := new(http.Client)
+	tokenReq, _ := http.NewRequest("POST", config.TokenEndpoint, body)
+	tokenReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	dump, _ := httputil.DumpRequestOut(tokenReq, true)
+	fmt.Println(string(dump))
+
+	resp, err := client.Do(tokenReq)
+	fmt.Println(err)
+	defer resp.Body.Close()
+	byteArray, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println(string(byteArray))
+
 	return "string(byteArray)"
 }
