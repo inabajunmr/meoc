@@ -69,7 +69,7 @@ func getTokenByClientCredentials(config OAuth2Config) AccessToken {
 	body := strings.NewReader(form.Encode())
 	client := new(http.Client)
 	req, _ := http.NewRequest("POST", config.TokenEndpoint, body)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	dump, _ := httputil.DumpRequestOut(req, true)
 	fmt.Println(string(dump))
 
@@ -90,6 +90,7 @@ func getTokenByAuthorizationCode(config OAuth2Config) AccessToken {
 	query.Add("client_secret", config.ClientSecret)
 	query.Add("response_type", "code")
 	query.Add("scope", config.Scope)
+	query.Add("redirect_uri", config.RedirectUri)
 	authReq.URL.RawQuery = query.Encode()
 
 	// user access uri by browser
@@ -105,14 +106,14 @@ func getTokenByAuthorizationCode(config OAuth2Config) AccessToken {
 	form.Add("client_id", config.ClientId)
 	form.Add("client_secret", config.ClientSecret)
 	form.Add("grant_type", config.GrantType)
-	form.Add("redirect_uri", config.RedirectUri)
 	form.Add("code", code)
+	form.Add("redirect_uri", config.RedirectUri)
 
 	body := strings.NewReader(form.Encode())
 	client := new(http.Client)
 	tokenReq, _ := http.NewRequest("POST", config.TokenEndpoint, body)
-	tokenReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	tokenReq.Header.Set("Accept", "application/json")
+	tokenReq.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	tokenReq.Header.Add("Accept", "application/json")
 
 	dump, _ := httputil.DumpRequestOut(tokenReq, true)
 	fmt.Println(string(dump))

@@ -2,6 +2,8 @@ package client
 
 import (
 	"fmt"
+	"io/ioutil"
+	"net/http"
 
 	"github.com/inabajunmr/meoc/oauth2"
 )
@@ -17,14 +19,17 @@ func Call(httpRequest HttpRequest, oauth2Profile string) {
 	// TODO authentication info from file
 
 	token := oauth2.GetAccessToken(oauth2Profile)
+
 	fmt.Println(token)
-	// Set TODO Access Token for request
+	// Set Access Token for request
+	client := new(http.Client)
+	req, _ := http.NewRequest(httpRequest.Method, httpRequest.URI, nil)
+	// req.Header.Add("Authorization", "Bearer "+token.AccessToken)
+	req.Header.Add("Accept", "application/json")
 
-	// req, _ := http.NewRequest(httpRequest.Method, httpRequest.URI, nil)
+	resp, _ := client.Do(req)
+	defer resp.Body.Close()
 
-	// resp, _ := client.Do(req)
-	// defer resp.Body.Close()
-
-	// byteArray, _ := ioutil.ReadAll(resp.Body)
-	// fmt.Println(string(byteArray))
+	byteArray, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println(string(byteArray))
 }
