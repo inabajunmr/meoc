@@ -1,6 +1,8 @@
 package client
 
 import (
+	"fmt"
+
 	"github.com/inabajunmr/meoc/oauth2"
 )
 
@@ -14,7 +16,8 @@ func Call(httpRequest HttpRequest, oauth2Profile string) {
 	// Get Access Token
 	// TODO authentication info from file
 
-	oauth2.GetAccessToken(oauth2Profile)
+	token := oauth2.GetAccessToken(oauth2Profile)
+	fmt.Println(token)
 	// Set TODO Access Token for request
 
 	// req, _ := http.NewRequest(httpRequest.Method, httpRequest.URI, nil)

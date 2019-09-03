@@ -2,6 +2,7 @@ package oauth2
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -24,7 +25,15 @@ type OAuth2Config struct {
 	RedirectUri           string
 }
 
-func GetAccessToken(profile string) string {
+type AccessToken struct {
+	AccessToken  string `json:"access_token"`
+	TokenType    string `json:"token_type"`
+	ExpiresIn    string `json:"expires_in"`
+	RefleshToken string `json:"reflesh_token"`
+	Scope        string `json:"scope"`
+}
+
+func GetAccessToken(profile string) AccessToken {
 
 	usr, _ := user.Current()
 	ini, _ := ini.Load(usr.HomeDir + "/.meoc/config")
@@ -45,11 +54,11 @@ func GetAccessToken(profile string) string {
 	case "authorization_code":
 		return getTokenByAuthorizationCode(config)
 	default:
-		return "" // TODO exception
+		return AccessToken{} // TODO exception
 	}
 }
 
-func getTokenByClientCredentials(config OAuth2Config) string {
+func getTokenByClientCredentials(config OAuth2Config) AccessToken {
 	form := url.Values{}
 	form.Add("client_id", config.ClientId)
 	form.Add("client_secret", config.ClientSecret)
@@ -67,11 +76,12 @@ func getTokenByClientCredentials(config OAuth2Config) string {
 	resp, _ := client.Do(req)
 	defer resp.Body.Close()
 	byteArray, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println(string(byteArray))
-	return string(byteArray)
+	tokenResponse := AccessToken{}
+	json.Unmarshal(byteArray, &tokenResponse) // TODO error
+	return tokenResponse
 }
 
-func getTokenByAuthorizationCode(config OAuth2Config) string {
+func getTokenByAuthorizationCode(config OAuth2Config) AccessToken {
 	// compile authorization request uri
 	authReq, _ := http.NewRequest("GET", config.AuthorizationEndpoint, nil)
 	authReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -102,14 +112,19 @@ func getTokenByAuthorizationCode(config OAuth2Config) string {
 	client := new(http.Client)
 	tokenReq, _ := http.NewRequest("POST", config.TokenEndpoint, body)
 	tokenReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	tokenReq.Header.Set("Accept", "application/json")
+
 	dump, _ := httputil.DumpRequestOut(tokenReq, true)
 	fmt.Println(string(dump))
 
 	resp, err := client.Do(tokenReq)
 	fmt.Println(err)
+
 	defer resp.Body.Close()
 	byteArray, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println(string(byteArray))
 
-	return "string(byteArray)"
+	tokenResponse := AccessToken{}
+	json.Unmarshal(byteArray, &tokenResponse) // TODO error
+
+	return tokenResponse
 }
