@@ -20,11 +20,10 @@ func Call(httpRequest HttpRequest, oauth2Profile string) {
 
 	token := oauth2.GetAccessToken(oauth2Profile)
 
-	fmt.Println(token)
 	// Set Access Token for request
 	client := new(http.Client)
 	req, _ := http.NewRequest(httpRequest.Method, httpRequest.URI, nil)
-	// req.Header.Add("Authorization", "Bearer "+token.AccessToken)
+	req.Header.Add("Authorization", "Bearer "+token.AccessToken)
 	req.Header.Add("Accept", "application/json")
 
 	resp, _ := client.Do(req)

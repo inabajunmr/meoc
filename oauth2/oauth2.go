@@ -16,13 +16,14 @@ import (
 )
 
 type OAuth2Config struct {
-	ClientId              string
-	ClientSecret          string
-	TokenEndpoint         string
-	AuthorizationEndpoint string
-	GrantType             string
-	Scope                 string
-	RedirectUri           string
+	ClientID               string
+	ClientSecret           string
+	TokenEndpoint          string
+	AuthorizationEndpoint  string
+	GrantType              string
+	Scope                  string
+	RedirectURI            string
+	TokenRequestParameters map[string]string
 }
 
 type AccessToken struct {
@@ -40,13 +41,21 @@ func GetAccessToken(profile string) AccessToken {
 
 	// TODO get AccessToken from cache
 	config := OAuth2Config{
-		ClientId:              ini.Section(profile).Key("client_id").String(),
-		ClientSecret:          ini.Section(profile).Key("client_secret").String(),
-		AuthorizationEndpoint: ini.Section(profile).Key("authorization_endpoint").String(),
-		TokenEndpoint:         ini.Section(profile).Key("token_endpoint").String(),
-		GrantType:             ini.Section(profile).Key("grant_type").String(),
-		RedirectUri:           ini.Section(profile).Key("redirect_uri").String(),
-		Scope:                 ini.Section(profile).Key("scope").String()}
+		ClientID:               ini.Section(profile).Key("client_id").Value(),
+		ClientSecret:           ini.Section(profile).Key("client_secret").Value(),
+		AuthorizationEndpoint:  ini.Section(profile).Key("authorization_endpoint").Value(),
+		TokenEndpoint:          ini.Section(profile).Key("token_endpoint").Value(),
+		GrantType:              ini.Section(profile).Key("grant_type").Value(),
+		RedirectURI:            ini.Section(profile).Key("redirect_uri").Value(),
+		Scope:                  ini.Section(profile).Key("scope").Value(),
+		TokenRequestParameters: map[string]string{}}
+
+	// add token request additional parameter
+	for _, key := range ini.Section(profile).Keys() {
+		if strings.HasPrefix(key.Name(), "token_request_p_") {
+			config.TokenRequestParameters[key.Name()[16:]] = key.Value()
+		}
+	}
 
 	switch config.GrantType {
 	case "client_credentials":
@@ -60,11 +69,14 @@ func GetAccessToken(profile string) AccessToken {
 
 func getTokenByClientCredentials(config OAuth2Config) AccessToken {
 	form := url.Values{}
-	form.Add("client_id", config.ClientId)
+	form.Add("client_id", config.ClientID)
 	form.Add("client_secret", config.ClientSecret)
 	form.Add("grant_type", config.GrantType)
 	form.Add("scope", config.Scope)
-	form.Add("audience", "http://example.com")
+
+	for key, value := range config.TokenRequestParameters {
+		form.Add(key, value)
+	}
 
 	body := strings.NewReader(form.Encode())
 	client := new(http.Client)
@@ -73,11 +85,13 @@ func getTokenByClientCredentials(config OAuth2Config) AccessToken {
 	dump, _ := httputil.DumpRequestOut(req, true)
 	fmt.Println(string(dump))
 
+	// token request
 	resp, _ := client.Do(req)
 	defer resp.Body.Close()
 	byteArray, _ := ioutil.ReadAll(resp.Body)
 	tokenResponse := AccessToken{}
 	json.Unmarshal(byteArray, &tokenResponse) // TODO error
+
 	return tokenResponse
 }
 
@@ -86,11 +100,11 @@ func getTokenByAuthorizationCode(config OAuth2Config) AccessToken {
 	authReq, _ := http.NewRequest("GET", config.AuthorizationEndpoint, nil)
 	authReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	query := authReq.URL.Query()
-	query.Add("client_id", config.ClientId)
+	query.Add("client_id", config.ClientID)
 	query.Add("client_secret", config.ClientSecret)
 	query.Add("response_type", "code")
 	query.Add("scope", config.Scope)
-	query.Add("redirect_uri", config.RedirectUri)
+	query.Add("redirect_uri", config.RedirectURI)
 	authReq.URL.RawQuery = query.Encode()
 
 	// user access uri by browser
@@ -103,11 +117,11 @@ func getTokenByAuthorizationCode(config OAuth2Config) AccessToken {
 
 	// token request
 	form := url.Values{}
-	form.Add("client_id", config.ClientId)
+	form.Add("client_id", config.ClientID)
 	form.Add("client_secret", config.ClientSecret)
 	form.Add("grant_type", config.GrantType)
 	form.Add("code", code)
-	form.Add("redirect_uri", config.RedirectUri)
+	form.Add("redirect_uri", config.RedirectURI)
 
 	body := strings.NewReader(form.Encode())
 	client := new(http.Client)
