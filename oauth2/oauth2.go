@@ -60,6 +60,8 @@ func GetAccessToken(profile string) AccessToken {
 		return getTokenByClientCredentials(config)
 	case "authorization_code":
 		return getTokenByAuthorizationCode(config)
+	case "implicit":
+		return getTokenByImplicit(config)
 	default:
 		return AccessToken{} // TODO exception
 	}
