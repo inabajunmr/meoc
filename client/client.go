@@ -19,6 +19,7 @@ func Call(httpRequest HttpRequest, oauth2Profile string) {
 	// TODO authentication info from file
 
 	token := oauth2.GetAccessToken(oauth2Profile)
+	fmt.Println(token)
 
 	// Set Access Token for request
 	client := new(http.Client)
