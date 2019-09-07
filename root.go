@@ -12,17 +12,12 @@ var rootCmd = &cobra.Command{
 	Use: "API Client for authorized endpoint by OAuth 2.0",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		url, err := cmd.Flags().GetString("url")
-		if err != nil {
-			os.Exit(1)
-		}
-
 		profile, err := cmd.Flags().GetString("profile")
 		if err != nil {
 			os.Exit(1)
 		}
 
-		client.Call(client.HttpRequest{Method: "GET", URI: url}, profile)
+		client.Call(client.HttpRequest{Method: "GET", URI: args[0]}, profile)
 	},
 }
 

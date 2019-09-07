@@ -17,8 +17,6 @@ type HttpRequest struct {
 func Call(httpRequest HttpRequest, oauth2Profile string) {
 
 	// Get Access Token
-	// TODO authentication info from file
-
 	token := oauth2.GetAccessToken(oauth2Profile)
 	fmt.Println(token)
 
