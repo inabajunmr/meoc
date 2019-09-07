@@ -34,6 +34,7 @@ func getTokenByClientCredentials(config OAuth2Config) AccessToken {
 	byteArray, _ := ioutil.ReadAll(resp.Body)
 	tokenResponse := AccessToken{}
 	json.Unmarshal(byteArray, &tokenResponse) // TODO error
+	fmt.Println(string(byteArray))
 
 	return tokenResponse
 }

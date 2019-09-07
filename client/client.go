@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
 
 	"github.com/inabajunmr/meoc/oauth2"
 )
@@ -26,6 +27,8 @@ func Call(httpRequest HttpRequest, oauth2Profile string) {
 	req, _ := http.NewRequest(httpRequest.Method, httpRequest.URI, nil)
 	req.Header.Add("Authorization", "Bearer "+token.AccessToken)
 	req.Header.Add("Accept", "application/json")
+	dump, _ := httputil.DumpRequestOut(req, true)
+	fmt.Println(string(dump))
 
 	resp, _ := client.Do(req)
 	defer resp.Body.Close()

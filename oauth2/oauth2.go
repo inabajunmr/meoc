@@ -15,6 +15,8 @@ type OAuth2Config struct {
 	GrantType                      string
 	Scope                          string
 	RedirectURI                    string
+	Username                       string
+	Password                       string
 	TokenRequestParameters         map[string]string
 	AuthorizationRequestParameters map[string]string
 }
@@ -41,6 +43,8 @@ func GetAccessToken(profile string) AccessToken {
 		GrantType:                      ini.Section(profile).Key("grant_type").Value(),
 		RedirectURI:                    ini.Section(profile).Key("redirect_uri").Value(),
 		Scope:                          ini.Section(profile).Key("scope").Value(),
+		Username:                       ini.Section(profile).Key("username").Value(),
+		Password:                       ini.Section(profile).Key("password").Value(),
 		TokenRequestParameters:         map[string]string{},
 		AuthorizationRequestParameters: map[string]string{}}
 
@@ -60,6 +64,8 @@ func GetAccessToken(profile string) AccessToken {
 		return getTokenByClientCredentials(config)
 	case "authorization_code":
 		return getTokenByAuthorizationCode(config)
+	case "password":
+		return getTokenByResourceOwnersPasswordCredentials(config)
 	case "implicit":
 		return getTokenByImplicit(config)
 	default:
