@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/inabajunmr/meoc/client"
 	"github.com/spf13/cobra"
@@ -17,7 +18,13 @@ var rootCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		client.Call(client.HttpRequest{Method: "GET", URI: args[0]}, profile)
+		headerStrs, _ := cmd.Flags().GetStringSlice("header")
+		var headers []client.Header
+		for _, v := range headerStrs {
+			headers = append(headers, client.Header{Name: strings.Split(v, ":")[0], Value: strings.Split(v, ":")[1]})
+		}
+
+		client.Call(client.HttpRequest{Method: "GET", URI: args[0], Headers: headers}, profile)
 	},
 }
 
@@ -30,6 +37,6 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.Flags().StringP("url", "u", "", "endpoint")
-	rootCmd.Flags().StringP("profile", "p", "", "authentication profile")
+	rootCmd.Flags().StringSliceP("header", "H", nil, "header value")
+	rootCmd.Flags().StringP("profile", "P", "", "authentication profile")
 }
