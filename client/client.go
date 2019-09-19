@@ -22,11 +22,7 @@ type Header struct {
 
 func Call(httpRequest HttpRequest, oauth2Profile string) {
 	// Get Access Token
-	token, err := oauth2.GetAccessToken(oauth2Profile)
-	if err != nil {
-		fmt.Println(err)
-
-	}
+	token, _ := oauth2.GetAccessToken(oauth2Profile)
 
 	// Set Access Token for request
 	client := new(http.Client)
