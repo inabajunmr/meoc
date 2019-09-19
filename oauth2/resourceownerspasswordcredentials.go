@@ -10,9 +10,12 @@ import (
 	"strings"
 )
 
-func getTokenByResourceOwnersPasswordCredentials(config OAuth2Config) AccessToken {
+func getTokenByResourceOwnersPasswordCredentials(config OAuth2Config) (*AccessToken, error) {
 	// compile authorization request uri
-	authReq, _ := http.NewRequest("GET", config.AuthorizationEndpoint, nil)
+	authReq, err := http.NewRequest("GET", config.AuthorizationEndpoint, nil)
+	if err != nil {
+		return nil, err
+	}
 	authReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	form := url.Values{}
 	form.Add("scope", config.Scope)
@@ -25,21 +28,34 @@ func getTokenByResourceOwnersPasswordCredentials(config OAuth2Config) AccessToke
 
 	body := strings.NewReader(form.Encode())
 	client := new(http.Client)
-	tokenReq, _ := http.NewRequest("POST", config.TokenEndpoint, body)
+	tokenReq, err := http.NewRequest("POST", config.TokenEndpoint, body)
+	if err != nil {
+		return nil, err
+	}
 	tokenReq.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	tokenReq.Header.Add("Accept", "application/json")
 
-	dump, _ := httputil.DumpRequestOut(tokenReq, true)
+	dump, err := httputil.DumpRequestOut(tokenReq, true)
+	if err != nil {
+		return nil, err
+	}
 	fmt.Println(string(dump))
 
 	resp, err := client.Do(tokenReq)
-	fmt.Println(err)
+	if err != nil {
+		return nil, err
+	}
 
 	defer resp.Body.Close()
-	byteArray, _ := ioutil.ReadAll(resp.Body)
+	byteArray, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
 
 	tokenResponse := AccessToken{}
-	json.Unmarshal(byteArray, &tokenResponse) // TODO error
+	if err = json.Unmarshal(byteArray, &tokenResponse); err != nil {
+		return nil, err
+	}
 
-	return tokenResponse
+	return &tokenResponse, nil
 }

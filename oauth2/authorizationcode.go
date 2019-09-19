@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-func getTokenByAuthorizationCode(config OAuth2Config) AccessToken {
+func getTokenByAuthorizationCode(config OAuth2Config) (*AccessToken, error) {
 	// compile authorization request uri
 	authReq, _ := http.NewRequest("GET", config.AuthorizationEndpoint, nil)
 	authReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -50,21 +50,28 @@ func getTokenByAuthorizationCode(config OAuth2Config) AccessToken {
 
 	body := strings.NewReader(form.Encode())
 	client := new(http.Client)
-	tokenReq, _ := http.NewRequest("POST", config.TokenEndpoint, body)
+	tokenReq, err := http.NewRequest("POST", config.TokenEndpoint, body)
 	tokenReq.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	tokenReq.Header.Add("Accept", "application/json")
 
-	dump, _ := httputil.DumpRequestOut(tokenReq, true)
+	dump, err := httputil.DumpRequestOut(tokenReq, true)
+	if err != nil {
+		return nil, err
+	}
 	fmt.Println(string(dump))
 
 	resp, err := client.Do(tokenReq)
-	fmt.Println(err)
+	if err != nil {
+		return nil, err
+	}
 
 	defer resp.Body.Close()
 	byteArray, _ := ioutil.ReadAll(resp.Body)
 
 	tokenResponse := AccessToken{}
-	json.Unmarshal(byteArray, &tokenResponse) // TODO error
+	if err = json.Unmarshal(byteArray, &tokenResponse); err != nil {
+		return nil, err
+	}
 
-	return tokenResponse
+	return &tokenResponse, nil
 }

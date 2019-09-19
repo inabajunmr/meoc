@@ -1,6 +1,8 @@
 package oauth2
 
 import (
+	"errors"
+	"fmt"
 	"os/user"
 	"strings"
 
@@ -24,12 +26,12 @@ type OAuth2Config struct {
 type AccessToken struct {
 	AccessToken  string `json:"access_token"`
 	TokenType    string `json:"token_type"`
-	ExpiresIn    string `json:"expires_in"`
+	ExpiresIn    int    `json:"expires_in"`
 	RefleshToken string `json:"reflesh_token"`
 	Scope        string `json:"scope"`
 }
 
-func GetAccessToken(profile string) AccessToken {
+func GetAccessToken(profile string) (*AccessToken, error) {
 
 	usr, _ := user.Current()
 	ini, _ := ini.Load(usr.HomeDir + "/.meoc/config")
@@ -69,6 +71,6 @@ func GetAccessToken(profile string) AccessToken {
 	case "implicit":
 		return getTokenByImplicit(config)
 	default:
-		return AccessToken{} // TODO exception
+		return nil, errors.New(fmt.Sprintf("Grant Type:%s is not supported.", config.GrantType))
 	}
 }

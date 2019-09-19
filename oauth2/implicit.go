@@ -6,9 +6,10 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 )
 
-func getTokenByImplicit(config OAuth2Config) AccessToken {
+func getTokenByImplicit(config OAuth2Config) (*AccessToken, error) {
 	// compile authorization request uri
 	authReq, _ := http.NewRequest("GET", config.AuthorizationEndpoint, nil)
 	authReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -34,16 +35,19 @@ func getTokenByImplicit(config OAuth2Config) AccessToken {
 	hash := stdin.Text()
 
 	// parse hash for constructing token
-	p, _ := url.Parse("http://example.com?" + hash)
+	p, err := url.Parse("http://example.com?" + hash)
+	if err != nil {
+		return nil, err
+	}
 	hashQuery := p.Query()
-	var expiresIn string
+	var expiresIn int
 	if hashQuery["expires_in"] != nil {
-		expiresIn = hashQuery["expires_in"][0]
+		expiresIn, _ = strconv.Atoi(hashQuery["expires_in"][0])
 	}
 
 	var scope string
 	if hashQuery["scope"] != nil {
-		expiresIn = hashQuery["scope"][0]
+		scope = hashQuery["scope"][0]
 	}
 
 	tokenResponse := AccessToken{AccessToken: hashQuery["access_token"][0],
@@ -51,5 +55,5 @@ func getTokenByImplicit(config OAuth2Config) AccessToken {
 		ExpiresIn: expiresIn,
 		Scope:     scope}
 
-	return tokenResponse
+	return &tokenResponse, nil
 }

@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func getTokenByClientCredentials(config OAuth2Config) AccessToken {
+func getTokenByClientCredentials(config OAuth2Config) (*AccessToken, error) {
 	form := url.Values{}
 	form.Add("client_id", config.ClientID)
 	form.Add("client_secret", config.ClientSecret)
@@ -23,18 +23,32 @@ func getTokenByClientCredentials(config OAuth2Config) AccessToken {
 
 	body := strings.NewReader(form.Encode())
 	client := new(http.Client)
-	req, _ := http.NewRequest("POST", config.TokenEndpoint, body)
+	req, err := http.NewRequest("POST", config.TokenEndpoint, body)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	dump, _ := httputil.DumpRequestOut(req, true)
+	dump, err := httputil.DumpRequestOut(req, true)
+	if err != nil {
+		return nil, err
+	}
 	fmt.Println(string(dump))
 
 	// token request
-	resp, _ := client.Do(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
 	defer resp.Body.Close()
-	byteArray, _ := ioutil.ReadAll(resp.Body)
+	byteArray, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
 	tokenResponse := AccessToken{}
-	json.Unmarshal(byteArray, &tokenResponse) // TODO error
-	fmt.Println(string(byteArray))
+	if err = json.Unmarshal(byteArray, &tokenResponse); err != nil {
+		fmt.Println(string(byteArray))
+		return nil, err
+	}
 
-	return tokenResponse
+	return &tokenResponse, nil
 }
