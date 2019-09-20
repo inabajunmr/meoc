@@ -20,25 +20,41 @@ type Header struct {
 	Value string
 }
 
-func Call(httpRequest HttpRequest, oauth2Profile string) {
+func Call(httpRequest HttpRequest, oauth2Profile string) error {
 	// Get Access Token
-	token, _ := oauth2.GetAccessToken(oauth2Profile)
+	token, err := oauth2.GetAccessToken(oauth2Profile)
+	if err != nil {
+		return err
+	}
 
 	// Set Access Token for request
 	client := new(http.Client)
-	req, _ := http.NewRequest(httpRequest.Method, httpRequest.URI, nil)
+	req, err := http.NewRequest(httpRequest.Method, httpRequest.URI, nil)
+	if err != nil {
+		return err
+	}
 	req.Header.Add("Authorization", "Bearer "+token.AccessToken)
 	req.Header.Add("Accept", "application/json")
 	for _, v := range httpRequest.Headers {
 		req.Header.Add(v.Name, v.Value)
 	}
 
-	dump, _ := httputil.DumpRequestOut(req, true)
+	dump, err := httputil.DumpRequestOut(req, true)
+	if err != nil {
+		return err
+	}
 	fmt.Println(string(dump))
 
-	resp, _ := client.Do(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
 	defer resp.Body.Close()
 
-	byteArray, _ := ioutil.ReadAll(resp.Body)
+	byteArray, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
 	fmt.Println(string(byteArray))
+	return nil
 }

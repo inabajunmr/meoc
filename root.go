@@ -24,7 +24,10 @@ var rootCmd = &cobra.Command{
 			headers = append(headers, client.Header{Name: strings.Split(v, ":")[0], Value: strings.Split(v, ":")[1]})
 		}
 
-		client.Call(client.HttpRequest{Method: "GET", URI: args[0], Headers: headers}, profile)
+		err = client.Call(client.HttpRequest{Method: "GET", URI: args[0], Headers: headers}, profile)
+		if err != nil {
+			fmt.Printf("Something wrong: %s", err)
+		}
 	},
 }
 
